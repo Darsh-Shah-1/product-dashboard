@@ -27,12 +27,12 @@ export default function ProductModal({ product, onClose, theme, onAddToCart }) {
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-xl bg-red-600 text-white font-black border-2 border-black hover:bg-red-700 transition"
+            className="absolute top-4 right-4 p-2 rounded-xl bg-red-600 text-white font-black border-2 border-black hover:bg-red-700 transition z-20"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-6 pt-2">
             <div className="w-full md:w-1/2 h-64 rounded-2xl overflow-hidden relative border-4 border-black bg-black">
               <img
                 src={product.thumbnail}
@@ -44,9 +44,9 @@ export default function ProductModal({ product, onClose, theme, onAddToCart }) {
               </span>
             </div>
 
-            <div className="w-full md:w-1/2 flex flex-col justify-between">
+            <div className="w-full md:w-1/2 flex flex-col justify-between pr-0 md:pr-8">
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pr-10 md:pr-0">
                   <span className="text-xs font-black uppercase text-yellow-400">
                     {product.brand || 'Elite Series'}
                   </span>
