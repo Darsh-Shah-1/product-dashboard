@@ -5,7 +5,7 @@ import SkeletonCard from './components/SkeletonCard';
 import ProductModal from './components/ProductModal';
 import { 
   Search, SlidersHorizontal, PackageX, Sun, Moon, 
-  Heart, ArrowUpDown, Scale, X, Star, CheckCircle, AlertCircle 
+  ArrowUpDown, Scale, X, LayoutGrid, Grid2X2
 } from 'lucide-react';
 
 const LIMIT = 12;
@@ -39,12 +39,13 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [sortBy, setSortBy] = useState('default');
-  const [quickFilter, setQuickFilter] = useState('all'); // 'all', 'under50', 'topRated', 'wishlist'
+  const [quickFilter, setQuickFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
-  // Dark/Light Mode
+  // UI Customizations
   const [darkMode, setDarkMode] = useState(true);
+  const [gridCols, setGridCols] = useState(4);
 
   // LocalStorage Wishlist
   const [wishlist, setWishlist] = useState(() => {
@@ -59,6 +60,22 @@ export default function App() {
     localStorage.setItem('app_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
+  // Keyboard Shortcuts: '/' to search, 'Esc' to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.querySelector('input[type="text"]')?.focus();
+      }
+      if (e.key === 'Escape') {
+        setSelectedProduct(null);
+        setCompareItems([]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const toggleWishlist = (product) => {
     setWishlist((prev) => 
       prev.some((item) => item.id === product.id)
@@ -72,7 +89,7 @@ export default function App() {
       if (prev.some((item) => item.id === product.id)) {
         return prev.filter((item) => item.id !== product.id);
       }
-      if (prev.length >= 3) return prev; // Limit to 3 items
+      if (prev.length >= 3) return prev;
       return [...prev, product];
     });
   };
@@ -108,7 +125,7 @@ export default function App() {
     initData();
   }, []);
 
-  // Filter & Sort Logic
+  // Filter & Search Logic
   const filteredProducts = allProducts.filter((p) => {
     const q = search.trim().toLowerCase();
     
@@ -152,11 +169,15 @@ export default function App() {
   const startIndex = (page - 1) * LIMIT;
   const paginatedProducts = sortedProducts.slice(startIndex, startIndex + LIMIT);
 
+  const gridColsClass = 
+    gridCols === 2 ? 'lg:grid-cols-2' : 
+    gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4';
+
   return (
-    <div className={`min-h-screen font-sans antialiased transition-colors duration-300 ${
+    <div className={`min-h-screen font-sans antialiased transition-colors duration-300 relative ${
       darkMode ? 'bg-slate-900 text-slate-100 selection:bg-indigo-500 selection:text-white' : 'bg-slate-50 text-slate-800 selection:bg-indigo-600 selection:text-white'
     }`}>
-      {/* Navbar */}
+      {/* Header */}
       <header className={`border-b sticky top-0 z-30 transition-colors duration-300 ${
         darkMode ? 'border-slate-800 bg-slate-950/80 backdrop-blur-md' : 'border-slate-200 bg-white/80 backdrop-blur-md'
       }`}>
@@ -181,13 +202,14 @@ export default function App() {
             </button>
           </div>
 
-          {/* Search, Sort & Category Controls */}
+          {/* Controls Bar */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Input */}
             <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search catalog..."
+                placeholder="Search catalog... (/)"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className={`w-full border rounded-lg pl-10 pr-4 py-2 text-sm transition focus:outline-none focus:border-indigo-500 ${
@@ -196,6 +218,7 @@ export default function App() {
               />
             </div>
 
+            {/* Category Dropdown */}
             <div className="relative w-full sm:w-48">
               <SlidersHorizontal className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
               <select
@@ -230,6 +253,27 @@ export default function App() {
               </select>
             </div>
 
+            {/* Grid Density Switcher */}
+            <div className={`hidden lg:flex items-center gap-1 border rounded-lg p-1 ${
+              darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-300 bg-white'
+            }`}>
+              <button
+                onClick={() => setGridCols(2)}
+                className={`p-1.5 rounded transition ${gridCols === 2 ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                title="2 Columns"
+              >
+                <Grid2X2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setGridCols(4)}
+                className={`p-1.5 rounded transition ${gridCols === 4 ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                title="4 Columns"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Dark/Light Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition ${
@@ -267,9 +311,35 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-6 py-8 pb-32">
+      <main className="max-w-7xl mx-auto px-6 py-8 pb-32 relative z-10">
+        {/* Active Filter Chips */}
+        {(search || category || quickFilter !== 'all') && (
+          <div className="flex items-center gap-2 mb-6 flex-wrap">
+            <span className="text-xs text-slate-500 font-medium">Active Filters:</span>
+            {search && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                "{search}"
+                <button onClick={() => setSearch('')} className="hover:text-white">×</button>
+              </span>
+            )}
+            {category && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                {formatCategoryName(category)}
+                <button onClick={() => setCategory('')} className="hover:text-white">×</button>
+              </span>
+            )}
+            <button
+              onClick={() => { setSearch(''); setCategory(''); setQuickFilter('all'); }}
+              className="text-xs text-slate-500 hover:text-slate-300 underline ml-2"
+            >
+              Reset all
+            </button>
+          </div>
+        )}
+
+        {/* Product Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className={`grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${gridColsClass}`}>
             {Array.from({ length: 8 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -284,7 +354,7 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <motion.div layout className={`grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${gridColsClass}`}>
             <AnimatePresence>
               {paginatedProducts.map((p) => (
                 <ProductCard
@@ -302,7 +372,7 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* Footer Pagination */}
+        {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className={`mt-12 pt-6 border-t flex items-center justify-between text-sm ${
             darkMode ? 'border-slate-800' : 'border-slate-200'
@@ -334,7 +404,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Comparison Drawer */}
+      {/* Compare Drawer */}
       <AnimatePresence>
         {compareItems.length > 0 && (
           <motion.div

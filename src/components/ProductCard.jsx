@@ -66,6 +66,19 @@ export default function ProductCard({
           }`}>
             {product.category}
           </span>
+
+          {/* Stock Indicator Badge */}
+          <div className="absolute bottom-2 left-2">
+            {product.stock <= 5 ? (
+              <span className="text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded backdrop-blur-md">
+                Only {product.stock} left
+              </span>
+            ) : (
+              <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded backdrop-blur-md">
+                In Stock
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="p-4">
